@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPS Battle Mode</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        .exit-button { position: absolute; top: 20px; right: 20px; padding: 10px 15px; background: red; color: white; border: none; cursor: pointer; font-size: 16px; }
+        .message { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; padding: 20px; background: rgba(0, 0, 0, 0.8); color: white; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+    <button class="exit-button" onclick="exitGame()">🚪 Leave Battle</button>
+    <div id="win-message" class="message">🎉 Victory! You gained $2000 and 50 troops!</div>
+    <div id="lose-message" class="message">💀 Defeat! You lost $1000 and 100 troops!</div>
+
+    <script>
+        let scene, camera, renderer;
+        let player, bullets = [];
+        let enemies = [];
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let enemiesRemaining = 5;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            camera.position.y = 2;
+
+            let floorGeometry = new THREE.PlaneGeometry(50, 50);
+            let floorMaterial = new THREE.MeshBasicMaterial({ color: 0x444444, side: THREE.DoubleSide });
+            let floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            scene.add(floor);
+
+            let gunGeometry = new THREE.BoxGeometry(0.5, 0.2, 1);
+            let gunMaterial = new THREE.MeshBasicMaterial({ color: 0x222222 });
+            let gun = new THREE.Mesh(gunGeometry, gunMaterial);
+            gun.position.set(0, -0.5, -1.5);
+            camera.add(gun);
+            scene.add(camera);
+
+            for (let i = 0; i < 5; i++) {
+                spawnEnemy();
+            }
+
+            document.addEventListener("keydown", onKeyDown);
+            document.addEventListener("keyup", onKeyUp);
+            document.addEventListener("click", shoot);
+        }
+
+        function onKeyDown(event) {
+            if (event.key === "w") moveForward = true;
+            if (event.key === "s") moveBackward = true;
+            if (event.key === "a") moveLeft = true;
+            if (event.key === "d") moveRight = true;
+        }
+
+        function onKeyUp(event) {
+            if (event.key === "w") moveForward = false;
+            if (event.key === "s") moveBackward = false;
+            if (event.key === "a") moveLeft = false;
+            if (event.key === "d") moveRight = false;
+        }
+
+        function shoot() {
+            let bulletGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            let bulletMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            let bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+            bullet.position.copy(camera.position);
+            bullet.velocity = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).multiplyScalar(0.5);
+            scene.add(bullet);
+            bullets.push(bullet);
+
+            // Gunshot Sound
+            let gunshot = new Audio("https://www.myinstants.com/media/sounds/gunshot.mp3");
+            gunshot.play();
+        }
+
+        function spawnEnemy() {
+            let enemyGeometry = new THREE.BoxGeometry(1, 2, 1);
+            let enemyMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            let enemy = new THREE.Mesh(enemyGeometry, enemyMaterial);
+            enemy.position.set(Math.random() * 20 - 10, 1, Math.random() * -20);
+            scene.add(enemy);
+            enemies.push(enemy);
+        }
+
+        function update() {
+            let speed = 0.1;
+            if (moveForward) camera.position.z -= speed;
+            if (moveBackward) camera.position.z += speed;
+            if (moveLeft) camera.position.x -= speed;
+            if (moveRight) camera.position.x += speed;
+
+            bullets.forEach((bullet, index) => {
+                bullet.position.add(bullet.velocity);
+                if (bullet.position.z < -20) {
+                    scene.remove(bullet);
+                    bullets.splice(index, 1);
+                }
+            });
+
+            bullets.forEach((bullet, bIndex) => {
+                enemies.forEach((enemy, eIndex) => {
+                    if (bullet.position.distanceTo(enemy.position) < 1) {
+                        scene.remove(enemy);
+                        enemies.splice(eIndex, 1);
+                        scene.remove(bullet);
+                        bullets.splice(bIndex, 1);
+                        enemiesRemaining--;
+
+                        if (enemiesRemaining === 0) {
+                            setTimeout(() => winGame(), 1000);
+                        }
+                    }
+                });
+            });
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(update);
+        }
+
+        function winGame() {
+            document.getElementById("win-message").style.display = "block";
+            localStorage.setItem("gameResult", "win");
+            setTimeout(() => exitGame(), 3000);
+        }
+
+        function exitGame() {
+            window.location.href = "index.html";
+        }
+
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+        update();
+    </script>
+
+</body>
+</html>

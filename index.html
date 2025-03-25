@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>President Simulator</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: #121212; color: white; text-align: center; }
+        .header { background: linear-gradient(45deg, #0f0f0f, #333); padding: 15px; font-size: 24px; font-weight: bold; color: #00d4ff; }
+        .stats { display: flex; justify-content: space-around; background: #1c1c1c; padding: 10px; border-bottom: 2px solid #333; }
+        .stats div { font-size: 18px; }
+        .content { padding: 20px; }
+        .card { background: #1c1c1c; padding: 20px; margin: 10px auto; border-radius: 8px; box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1); width: 90%; max-width: 400px; }
+        .button { display: block; width: 100%; padding: 15px; font-size: 18px; border: none; cursor: pointer; border-radius: 8px; transition: 0.3s; margin-top: 10px; }
+        .green-btn { background: linear-gradient(45deg, #28a745, #2ecc71); color: white; }
+        .green-btn:hover { background: linear-gradient(45deg, #218838, #27ae60); }
+        .red-btn { background: linear-gradient(45deg, #dc3545, #ff4d4d); color: white; }
+        .red-btn:hover { background: linear-gradient(45deg, #c82333, #e60000); }
+        .world-img { width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">🏛️ President Simulator</div>
+
+    <!-- Stats Bar -->
+    <div class="stats">
+        <div>💰 Money: $<span id="money">5000</span></div>
+        <div>😊 Happiness: <span id="happiness">50</span></div>
+        <div>🔥 Chaos: <span id="chaos">0</span></div>
+        <div>🪖 Troops: <span id="troops">100</span></div>
+    </div>
+
+    <!-- World Image -->
+    <img id="worldImage" class="world-img" src="https://upload.wikimedia.org/wikipedia/commons/8/88/Earth_from_space_%28wiki%29.png" alt="World Image">
+
+    <!-- Main Game Content -->
+    <div class="content" id="gameContent">
+        <div class="card">
+            <h2 id="questionText">📜 Decision: Ban Social Media?</h2>
+            <button class="button green-btn" onclick="makeDecision(true)">✅ Yes</button>
+            <button class="button red-btn" onclick="makeDecision(false)">❌ No</button>
+        </div>
+    </div>
+
+    <script>
+        let money = 5000;
+        let happiness = 50;
+        let chaos = 0;
+        let troops = 100;
+
+        const questions = [
+            { text: "📜 Ban Social Media?", good: { happiness: 10, chaos: -5 }, bad: { happiness: -15, chaos: 10 } },
+            { text: "💰 Raise Taxes?", good: { money: 3000, happiness: -10 }, bad: { money: -2000, happiness: 15 } },
+            { text: "🪖 Increase Military Spending?", good: { money: -2000, troops: 50 }, bad: { money: 1500, chaos: 5 } },
+            { text: "⚖️ Ban Guns?", good: { happiness: 5, chaos: -5 }, bad: { happiness: -10, chaos: 10 } },
+            { text: "🏥 Fund Free Healthcare?", good: { money: -5000, happiness: 20 }, bad: { happiness: -10, chaos: 5 } },
+            { text: "🌍 Cut Carbon Emissions?", good: { happiness: 10, chaos: -10, money: -2000 }, bad: { happiness: -5, chaos: 10, money: 1000 } },
+            { text: "🎓 Invest in Education?", good: { money: -3000, happiness: 15 }, bad: { happiness: -5, chaos: 5 } },
+            { text: "💣 Start a War?", good: { troops: 500, money: -10000, chaos: 20 }, bad: { happiness: 20, chaos: -10 } },
+            { text: "🚀 Fund Space Exploration?", good: { money: -7000, happiness: 5 }, bad: { money: 3000, happiness: -5 } },
+            { text: "🏗️ Build More Roads?", good: { money: -4000, happiness: 10 }, bad: { chaos: 5, happiness: -5 } }
+        ];
+
+        const worldImages = [
+            { level: 0, img: "https://upload.wikimedia.org/wikipedia/commons/8/88/Earth_from_space_%28wiki%29.png" }, // Normal Earth
+            { level: 20, img: "https://upload.wikimedia.org/wikipedia/commons/3/3f/Global_warming_artificial_image.jpg" }, // Warming
+            { level: 40, img: "https://upload.wikimedia.org/wikipedia/commons/0/09/City_protests.jpg" }, // Protests & riots
+            { level: 60, img: "https://upload.wikimedia.org/wikipedia/commons/e/ef/WW3-nuke.jpg" }, // War
+            { level: 80, img: "https://upload.wikimedia.org/wikipedia/commons/5/50/Post_apocalyptic.jpg" }  // Apocalypse
+        ];
+
+        function updateStats() {
+            document.getElementById("money").innerText = money.toLocaleString();
+            document.getElementById("happiness").innerText = happiness;
+            document.getElementById("chaos").innerText = chaos;
+            document.getElementById("troops").innerText = troops;
+
+            let currentImage = worldImages.find(w => chaos >= w.level);
+            if (currentImage) document.getElementById("worldImage").src = currentImage.img;
+        }
+
+        function makeDecision(isGood) {
+            let randomIndex = Math.floor(Math.random() * questions.length);
+            let question = questions[randomIndex];
+            let effects = isGood ? question.good : question.bad;
+
+            money += effects.money || 0;
+            happiness += effects.happiness || 0;
+            chaos += effects.chaos || 0;
+            troops += effects.troops || 0;
+
+            updateStats();
+            document.getElementById("questionText").innerText = question.text;
+        }
+
+        window.onload = updateStats;
+    </script>
+
+</body>
+</html>
