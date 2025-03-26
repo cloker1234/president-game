@@ -17,7 +17,12 @@
         .green-btn:hover { background: linear-gradient(45deg, #218838, #27ae60); }
         .red-btn { background: linear-gradient(45deg, #dc3545, #ff4d4d); color: white; }
         .red-btn:hover { background: linear-gradient(45deg, #c82333, #e60000); }
-        .world-img { width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px; }
+        .blue-btn { background: linear-gradient(45deg, #007bff, #00aaff); color: white; }
+        .blue-btn:hover { background: linear-gradient(45deg, #0056b3, #0088cc); }
+        .restart-btn { background: linear-gradient(45deg, #ff9800, #ff5722); color: white; }
+        .restart-btn:hover { background: linear-gradient(45deg, #e65100, #d84315); }
+        .world-img { width: 100%; max-width: 600px; height: auto; border-radius: 8px; margin-bottom: 10px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -34,7 +39,7 @@
     </div>
 
     <!-- World Image -->
-    <img id="worldImage" class="world-img" src="https://upload.wikimedia.org/wikipedia/commons/8/88/Earth_from_space_%28wiki%29.png" alt="World Image">
+    <img id="worldImage" class="world-img" src="The_Earth_seen_from_Apollo_17.jpg" alt="World Image">
 
     <!-- Main Game Content -->
     <div class="content" id="gameContent">
@@ -42,8 +47,12 @@
             <h2 id="questionText">📜 Decision: Ban Social Media?</h2>
             <button class="button green-btn" onclick="makeDecision(true)">✅ Yes</button>
             <button class="button red-btn" onclick="makeDecision(false)">❌ No</button>
+            <button class="button blue-btn" onclick="enlistMilitary()">🪖 Enlist in the Military</button>
         </div>
     </div>
+
+    <!-- FPS Shooter Game -->
+    <iframe id="fpsGame" class="hidden" src="fps.html" width="100%" height="600px"></iframe>
 
     <script>
         let money = 5000;
@@ -51,25 +60,19 @@
         let chaos = 0;
         let troops = 100;
 
+        let usedQuestions = new Set();
+        let gameOver = false;
+
         const questions = [
             { text: "📜 Ban Social Media?", good: { happiness: 10, chaos: -5 }, bad: { happiness: -15, chaos: 10 } },
             { text: "💰 Raise Taxes?", good: { money: 3000, happiness: -10 }, bad: { money: -2000, happiness: 15 } },
             { text: "🪖 Increase Military Spending?", good: { money: -2000, troops: 50 }, bad: { money: 1500, chaos: 5 } },
             { text: "⚖️ Ban Guns?", good: { happiness: 5, chaos: -5 }, bad: { happiness: -10, chaos: 10 } },
             { text: "🏥 Fund Free Healthcare?", good: { money: -5000, happiness: 20 }, bad: { happiness: -10, chaos: 5 } },
-            { text: "🌍 Cut Carbon Emissions?", good: { happiness: 10, chaos: -10, money: -2000 }, bad: { happiness: -5, chaos: 10, money: 1000 } },
             { text: "🎓 Invest in Education?", good: { money: -3000, happiness: 15 }, bad: { happiness: -5, chaos: 5 } },
             { text: "💣 Start a War?", good: { troops: 500, money: -10000, chaos: 20 }, bad: { happiness: 20, chaos: -10 } },
-            { text: "🚀 Fund Space Exploration?", good: { money: -7000, happiness: 5 }, bad: { money: 3000, happiness: -5 } },
-            { text: "🏗️ Build More Roads?", good: { money: -4000, happiness: 10 }, bad: { chaos: 5, happiness: -5 } }
-        ];
-
-        const worldImages = [
-            { level: 0, img: "https://upload.wikimedia.org/wikipedia/commons/8/88/Earth_from_space_%28wiki%29.png" }, // Normal Earth
-            { level: 20, img: "https://upload.wikimedia.org/wikipedia/commons/3/3f/Global_warming_artificial_image.jpg" }, // Warming
-            { level: 40, img: "https://upload.wikimedia.org/wikipedia/commons/0/09/City_protests.jpg" }, // Protests & riots
-            { level: 60, img: "https://upload.wikimedia.org/wikipedia/commons/e/ef/WW3-nuke.jpg" }, // War
-            { level: 80, img: "https://upload.wikimedia.org/wikipedia/commons/5/50/Post_apocalyptic.jpg" }  // Apocalypse
+            { text: "🏗️ Build More Roads?", good: { money: -4000, happiness: 10 }, bad: { chaos: 5, happiness: -5 } },
+            { text: "📉 Cut Military Budget?", good: { money: 5000, troops: -50 }, bad: { troops: 50, chaos: 5 } }
         ];
 
         function updateStats() {
@@ -78,15 +81,23 @@
             document.getElementById("chaos").innerText = chaos;
             document.getElementById("troops").innerText = troops;
 
-            let currentImage = worldImages.find(w => chaos >= w.level);
-            if (currentImage) document.getElementById("worldImage").src = currentImage.img;
+            if (money <= 0 || happiness <= 0 || chaos >= 100) {
+                endGame();
+            }
         }
 
         function makeDecision(isGood) {
-            let randomIndex = Math.floor(Math.random() * questions.length);
-            let question = questions[randomIndex];
-            let effects = isGood ? question.good : question.bad;
+            if (gameOver || usedQuestions.size === questions.length) return;
 
+            let remainingQuestions = questions.filter((_, i) => !usedQuestions.has(i));
+            if (remainingQuestions.length === 0) return;
+            
+            let randomIndex = Math.floor(Math.random() * remainingQuestions.length);
+            let question = remainingQuestions[randomIndex];
+
+            usedQuestions.add(questions.indexOf(question));
+
+            let effects = isGood ? question.good : question.bad;
             money += effects.money || 0;
             happiness += effects.happiness || 0;
             chaos += effects.chaos || 0;
@@ -94,6 +105,23 @@
 
             updateStats();
             document.getElementById("questionText").innerText = question.text;
+        }
+
+        function enlistMilitary() {
+            document.getElementById("gameContent").innerHTML = "<h2>🪖 You have enlisted! Time to fight!</h2>";
+            document.getElementById("fpsGame").classList.remove("hidden");
+        }
+
+        function endGame() {
+            gameOver = true;
+            document.getElementById("gameContent").innerHTML = `
+                <h2>Game Over! Your presidency has ended.</h2>
+                <button onclick="restartGame()" class="button restart-btn">🔄 Restart</button>
+            `;
+        }
+
+        function restartGame() {
+            location.reload();
         }
 
         window.onload = updateStats;
