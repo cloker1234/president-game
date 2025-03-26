@@ -8,123 +8,147 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { background-color: #121212; color: white; text-align: center; }
         .header { background: linear-gradient(45deg, #0f0f0f, #333); padding: 15px; font-size: 24px; font-weight: bold; color: #00d4ff; }
-        .stats { display: flex; justify-content: space-around; background: #1c1c1c; padding: 10px; border-bottom: 2px solid #333; }
-        .stats div { font-size: 18px; }
+        .stats { display: flex; flex-wrap: wrap; justify-content: space-around; background: #1c1c1c; padding: 10px; border-bottom: 2px solid #333; }
         .content { padding: 20px; }
         .card { background: #1c1c1c; padding: 20px; margin: 10px auto; border-radius: 8px; box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1); width: 90%; max-width: 400px; }
         .button { display: block; width: 100%; padding: 15px; font-size: 18px; border: none; cursor: pointer; border-radius: 8px; transition: 0.3s; margin-top: 10px; }
-        .green-btn { background: linear-gradient(45deg, #28a745, #2ecc71); color: white; }
-        .green-btn:hover { background: linear-gradient(45deg, #218838, #27ae60); }
-        .red-btn { background: linear-gradient(45deg, #dc3545, #ff4d4d); color: white; }
-        .red-btn:hover { background: linear-gradient(45deg, #c82333, #e60000); }
-        .blue-btn { background: linear-gradient(45deg, #007bff, #00aaff); color: white; }
-        .blue-btn:hover { background: linear-gradient(45deg, #0056b3, #0088cc); }
-        .restart-btn { background: linear-gradient(45deg, #ff9800, #ff5722); color: white; }
-        .restart-btn:hover { background: linear-gradient(45deg, #e65100, #d84315); }
-        .world-img { width: 100%; max-width: 600px; height: auto; border-radius: 8px; margin-bottom: 10px; }
+        .green-btn { background: #28a745; color: white; }
+        .red-btn { background: #dc3545; color: white; }
+        .blue-btn { background: #007bff; color: white; }
+        .shop-btn { background: #ffa500; color: white; }
         .hidden { display: none; }
+        .character { width: 150px; height: auto; border-radius: 8px; margin: 10px auto; }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
     <div class="header">🏛️ President Simulator</div>
 
-    <!-- Stats Bar -->
     <div class="stats">
         <div>💰 Money: $<span id="money">5000</span></div>
         <div>😊 Happiness: <span id="happiness">50</span></div>
         <div>🔥 Chaos: <span id="chaos">0</span></div>
         <div>🪖 Troops: <span id="troops">100</span></div>
+        <div>📆 Year: <span id="year">1</span></div>
+        <div>🌎 Land Owned: <span id="land">1</span> Regions</div>
+        <div>🏅 Rank: <span id="rank">Mayor</span></div>
     </div>
 
-    <!-- World Image -->
-    <img id="worldImage" class="world-img" src="The_Earth_seen_from_Apollo_17.jpg" alt="World Image">
+    <img id="characterImage" class="character" src="character_mayor.png" alt="Character">
 
-    <!-- Main Game Content -->
     <div class="content" id="gameContent">
         <div class="card">
             <h2 id="questionText">📜 Decision: Ban Social Media?</h2>
             <button class="button green-btn" onclick="makeDecision(true)">✅ Yes</button>
             <button class="button red-btn" onclick="makeDecision(false)">❌ No</button>
-            <button class="button blue-btn" onclick="enlistMilitary()">🪖 Enlist in the Military</button>
+            <button class="button blue-btn" onclick="openShop()">🏦 Open Shop</button>
         </div>
     </div>
 
-    <!-- FPS Shooter Game -->
-    <iframe id="fpsGame" class="hidden" src="fps.html" width="100%" height="600px"></iframe>
+    <div id="shop" class="content hidden">
+        <div class="card">
+            <h2>🏦 Shop</h2>
+            <button class="button shop-btn" onclick="buyLand()">🏕️ Buy Land ($5000)</button>
+            <button class="button shop-btn" onclick="recruitTroops()">🪖 Recruit Troops ($2000)</button>
+            <button class="button blue-btn" onclick="closeShop()">⬅️ Back</button>
+        </div>
+    </div>
 
     <script>
-        let money = 5000;
-        let happiness = 50;
-        let chaos = 0;
-        let troops = 100;
-
-        let usedQuestions = new Set();
-        let gameOver = false;
+        let money = 5000, happiness = 50, chaos = 0, troops = 100, year = 1, land = 1, gameOver = false;
+        let rank = "Mayor";
 
         const questions = [
-            { text: "📜 Ban Social Media?", good: { happiness: 10, chaos: -5 }, bad: { happiness: -15, chaos: 10 } },
-            { text: "💰 Raise Taxes?", good: { money: 3000, happiness: -10 }, bad: { money: -2000, happiness: 15 } },
-            { text: "🪖 Increase Military Spending?", good: { money: -2000, troops: 50 }, bad: { money: 1500, chaos: 5 } },
-            { text: "⚖️ Ban Guns?", good: { happiness: 5, chaos: -5 }, bad: { happiness: -10, chaos: 10 } },
-            { text: "🏥 Fund Free Healthcare?", good: { money: -5000, happiness: 20 }, bad: { happiness: -10, chaos: 5 } },
-            { text: "🎓 Invest in Education?", good: { money: -3000, happiness: 15 }, bad: { happiness: -5, chaos: 5 } },
-            { text: "💣 Start a War?", good: { troops: 500, money: -10000, chaos: 20 }, bad: { happiness: 20, chaos: -10 } },
-            { text: "🏗️ Build More Roads?", good: { money: -4000, happiness: 10 }, bad: { chaos: 5, happiness: -5 } },
-            { text: "📉 Cut Military Budget?", good: { money: 5000, troops: -50 }, bad: { troops: 50, chaos: 5 } }
+            "📜 Should we increase taxes for the rich?",
+            "📜 Should we legalize gambling?",
+            "📜 Should we invest in military expansion?",
+            "📜 Should we impose strict gun laws?",
+            "📜 Should we cut funding for education?",
+            "📜 Should we start a space program?",
+            "📜 Should we allow AI to govern sectors?"
         ];
+
+        function getRandomQuestion() {
+            return questions[Math.floor(Math.random() * questions.length)];
+        }
 
         function updateStats() {
             document.getElementById("money").innerText = money.toLocaleString();
             document.getElementById("happiness").innerText = happiness;
             document.getElementById("chaos").innerText = chaos;
             document.getElementById("troops").innerText = troops;
+            document.getElementById("year").innerText = year;
+            document.getElementById("land").innerText = land;
+            document.getElementById("rank").innerText = rank;
 
-            if (money <= 0 || happiness <= 0 || chaos >= 100) {
-                endGame();
-            }
+            if (land >= 3) rank = "Governor";
+            if (land >= 6) rank = "President";
+            if (land >= 10) rank = "World Leader";
+
+            updateCharacter();
+            checkGameOver();
         }
 
         function makeDecision(isGood) {
-            if (gameOver || usedQuestions.size === questions.length) return;
+            if (gameOver) return;
 
-            let remainingQuestions = questions.filter((_, i) => !usedQuestions.has(i));
-            if (remainingQuestions.length === 0) return;
-            
-            let randomIndex = Math.floor(Math.random() * remainingQuestions.length);
-            let question = remainingQuestions[randomIndex];
+            let effect = isGood ? { money: 1000, happiness: 10, chaos: -5 } : { money: -1000, happiness: -10, chaos: 5 };
+            money += effect.money;
+            happiness += effect.happiness;
+            chaos += effect.chaos;
+            year++;
 
-            usedQuestions.add(questions.indexOf(question));
-
-            let effects = isGood ? question.good : question.bad;
-            money += effects.money || 0;
-            happiness += effects.happiness || 0;
-            chaos += effects.chaos || 0;
-            troops += effects.troops || 0;
-
+            document.getElementById("questionText").innerText = getRandomQuestion();
             updateStats();
-            document.getElementById("questionText").innerText = question.text;
         }
 
-        function enlistMilitary() {
-            document.getElementById("gameContent").innerHTML = "<h2>🪖 You have enlisted! Time to fight!</h2>";
-            document.getElementById("fpsGame").classList.remove("hidden");
+        function openShop() {
+            document.getElementById("shop").classList.remove("hidden");
+            document.getElementById("gameContent").classList.add("hidden");
         }
 
-        function endGame() {
-            gameOver = true;
-            document.getElementById("gameContent").innerHTML = `
-                <h2>Game Over! Your presidency has ended.</h2>
-                <button onclick="restartGame()" class="button restart-btn">🔄 Restart</button>
-            `;
+        function closeShop() {
+            document.getElementById("shop").classList.add("hidden");
+            document.getElementById("gameContent").classList.remove("hidden");
         }
 
-        function restartGame() {
-            location.reload();
+        function buyLand() {
+            if (money >= 5000) {
+                money -= 5000;
+                land++;
+                updateStats();
+            } else {
+                alert("Not enough money!");
+            }
         }
 
-        window.onload = updateStats;
+        function recruitTroops() {
+            if (money >= 2000) {
+                money -= 2000;
+                troops += 50;
+                updateStats();
+            } else {
+                alert("Not enough money!");
+            }
+        }
+
+        function updateCharacter() {
+            let imgSrc = "character_mayor.png";
+            if (rank === "Governor") imgSrc = "character_governor.png";
+            if (rank === "President") imgSrc = "character_president.png";
+            if (rank === "World Leader") imgSrc = "character_world_leader.png";
+            document.getElementById("characterImage").src = imgSrc;
+        }
+
+        function checkGameOver() {
+            if (money <= 0 || happiness <= 0 || chaos >= 100) {
+                gameOver = true;
+                document.getElementById("gameContent").innerHTML = `<h2>Game Over! Your leadership has ended.</h2>`;
+            }
+        }
+
+        document.getElementById("questionText").innerText = getRandomQuestion();
+        updateStats();
     </script>
 
 </body>
